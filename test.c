@@ -23,32 +23,32 @@ static int test_pass = 0;
 #define EXPECT_EQ_INT(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%d")
 #define EXPECT_EQ_DOUBLE(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%.17g")
 
-#define TEST_ERROR(error, json)                     \
-    do                                              \
-    {                                               \
-        parse_node node;                            \
-        node = mi_parser(json);                     \
-        EXPECT_EQ_INT(error, node.status);          \
-        EXPECT_EQ_INT(MI_NULL, mi_get_type(&node)); \
+#define TEST_ERROR(error, json)                       \
+    do                                                \
+    {                                                 \
+        parse_node *node_pt;                          \
+        node_pt = mi_parser(json);                    \
+        EXPECT_EQ_INT(error, node_pt->status);        \
+        EXPECT_EQ_INT(MI_NULL, mi_get_type(node_pt)); \
     } while (0)
 
-#define TEST_TYPE(expect_type, json)                    \
-    do                                                  \
-    {                                                   \
-        parse_node node;                                \
-        node = mi_parser(json);                         \
-        EXPECT_EQ_INT(PARSE_OK, node.status);           \
-        EXPECT_EQ_INT(expect_type, mi_get_type(&node)); \
+#define TEST_TYPE(expect_type, json)                      \
+    do                                                    \
+    {                                                     \
+        parse_node *node_pt;                              \
+        node_pt = mi_parser(json);                        \
+        EXPECT_EQ_INT(PARSE_OK, node_pt->status);         \
+        EXPECT_EQ_INT(expect_type, mi_get_type(node_pt)); \
     } while (0)
 
-#define TEST_NUMBER(expect_float, json)                       \
-    do                                                        \
-    {                                                         \
-        parse_node node;                                      \
-        node = mi_parser(json);                               \
-        EXPECT_EQ_INT(PARSE_OK, node.status);                 \
-        EXPECT_EQ_INT(MI_NUMBER, mi_get_type(&node));         \
-        EXPECT_EQ_DOUBLE(expect_float, mi_get_number(&node)); \
+#define TEST_NUMBER(expect_float, json)                         \
+    do                                                          \
+    {                                                           \
+        parse_node *node_pt;                                    \
+        node_pt = mi_parser(json);                              \
+        EXPECT_EQ_INT(PARSE_OK, node_pt->status);               \
+        EXPECT_EQ_INT(MI_NUMBER, mi_get_type(node_pt));         \
+        EXPECT_EQ_DOUBLE(expect_float, mi_get_number(node_pt)); \
     } while (0)
 
 static void test_type()
@@ -63,7 +63,6 @@ static void test_parse_error()
     TEST_ERROR(PARSE_INVALID_VALUE, "none");
     TEST_ERROR(PARSE_EXPECT_VALUE, "  ");
     TEST_ERROR(PARSE_ROOT_NOT_SIGNULAR, " false x");
-    TEST_ERROR(PARSE_INVALID_VALUE, "+0");
 }
 
 static void test_number()
