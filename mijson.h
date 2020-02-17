@@ -13,6 +13,7 @@ typedef enum
 typedef struct
 {
     /* data */
+    double n;
     mi_type type;
 
 } mi_value;
@@ -30,5 +31,5 @@ typedef struct
 } mi_context;
 int mi_parser(mi_value *v, const char *json);
 mi_type mi_get_type(const mi_value *v);
-
+double mi_get_number(const mi_value *v);
 #endif

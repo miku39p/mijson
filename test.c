@@ -21,36 +21,61 @@ static int test_pass = 0;
     } while (0)
 
 #define EXPECT_EQ_INT(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%d")
+#define EXPECT_EQ_DOUBLE(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%.17g")
 
-static void test_parse_null()
+#define TEST_ERROR(error, json)                    \
+    do                                             \
+    {                                              \
+        mi_value v;                                \
+        v.type = MI_FALSE;                         \
+        EXPECT_EQ_INT(error, mi_parser(&v, json)); \
+        EXPECT_EQ_INT(MI_NULL, mi_get_type(&v));   \
+    } while (0)
+
+#define TEST_TYPE(expect_type, json)                  \
+    do                                                \
+    {                                                 \
+        mi_value v;                                   \
+        v.type = MI_NULL;                             \
+        EXPECT_EQ_INT(PARSE_OK, mi_parser(&v, json)); \
+        EXPECT_EQ_INT(expect_type, mi_get_type(&v));  \
+    } while (0)
+
+#define TEST_NUMBER(float, json)                    \
+    do                                              \
+    {                                               \
+        mi_value v;                                 \
+        v.type = MI_NULL;                           \
+        TEST_TYPE(MI_NUMBER, json);  \
+        EXPECT_EQ_DOUBLE(float, mi_get_number(&v)); \
+    } while (0)
+
+static void test_type()
 {
-    mi_value v;
-    v.type = MI_NULL;
-    EXPECT_EQ_INT(PARSE_OK, mi_parser(&v, "null"));
-    EXPECT_EQ_INT(MI_NULL, mi_get_type(&v));
+    TEST_TYPE(MI_NULL, "null");
+    TEST_TYPE(MI_TRUE, " true ");
+    TEST_TYPE(MI_FALSE, "false ");
 }
 
-static void test_parse_true()
+static void test_parse_error()
 {
-    mi_value v;
-    v.type = MI_TRUE;
-    EXPECT_EQ_INT(PARSE_ROOT_NOT_SIGNULAR, mi_parser(&v, "true has"));
-    EXPECT_EQ_INT(MI_NULL, mi_get_type(&v));
+    TEST_ERROR(PARSE_INVALID_VALUE, "none");
+    TEST_ERROR(PARSE_EXPECT_VALUE, "  ");
+    TEST_ERROR(PARSE_ROOT_NOT_SIGNULAR, " false x");
+    TEST_ERROR(PARSE_INVALID_VALUE, "+0");
 }
 
-static void test_parse_false()
+static void test_number()
 {
-    mi_value v;
-    v.type = MI_NULL;
-    EXPECT_EQ_INT(PARSE_OK, mi_parser(&v, "false"));
-    EXPECT_EQ_INT(MI_FALSE, mi_get_type(&v));
+    TEST_NUMBER(0.0, "0");
+    TEST_NUMBER(0.0, "-0");
 }
 
 static void test_parse()
 {
-    test_parse_null();
-    test_parse_true();
-    test_parse_false();
+    test_type();
+    test_parse_error();
+    test_number();
 }
 
 int main()

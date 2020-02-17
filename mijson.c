@@ -34,7 +34,6 @@ static int context_is_end(mi_context *c)
 static int mi_parser_null(mi_context *c, mi_value *v)
 {
     EXPECT(c, 'n');
-    v->type = MI_NULL;
     if (c->json[0] != 'u' || c->json[1] != 'l' || c->json[2] != 'l')
     {
         return PARSE_INVALID_VALUE;
@@ -51,7 +50,6 @@ static int mi_parser_null(mi_context *c, mi_value *v)
 static int mi_parser_true(mi_context *c, mi_value *v)
 {
     EXPECT(c, 't');
-    v->type = MI_NULL;
     if (c->json[0] != 'r' || c->json[1] != 'u' || c->json[2] != 'e')
     {
         return PARSE_INVALID_VALUE;
@@ -68,7 +66,6 @@ static int mi_parser_true(mi_context *c, mi_value *v)
 static int mi_parser_false(mi_context *c, mi_value *v)
 {
     EXPECT(c, 'f');
-    v->type = MI_NULL;
     if (c->json[0] != 'a' || c->json[1] != 'l' || c->json[2] != 's' || c->json[3] != 'e')
     {
         return PARSE_INVALID_VALUE;
@@ -83,6 +80,7 @@ static int mi_parser_false(mi_context *c, mi_value *v)
 }
 static int mi_parse_value(mi_context *c, mi_value *v)
 {
+    v->type = MI_NULL;
     switch (*(c->json))
     {
     case 'n':
@@ -103,6 +101,11 @@ mi_type mi_get_type(const mi_value *v)
     return v->type;
 }
 
+double mi_get_number(const mi_value *v)
+{
+    /*assert(v != NULL && v->type == MI_NUMBER)*/;
+    return v->n;
+}
 int mi_parser(mi_value *v, const char *json)
 {
     mi_context c;
