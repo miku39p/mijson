@@ -1,12 +1,15 @@
 #include "mijson.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <float.h>
+#include <math.h>
 #define EXPECT(c, ch)               \
     do                              \
     {                               \
         assert(*(c->json) == (ch)); \
         c->json++;                  \
     } while (0)
+#define ISDIGIT(ch) ((ch) >= '0' && (ch) <= '9')
 
 static void mi_parser_whitespace(mi_context *c)
 {
@@ -78,6 +81,39 @@ static int mi_parser_false(mi_context *c, mi_value *v)
     v->type = MI_FALSE;
     return PARSE_OK;
 }
+static int mi_parser_number(mi_context *c, mi_value *v)
+{
+    char *end;
+    const char *start = c->json;
+    if (*(c->json) != '-' && (!(ISDIGIT(*(c->json)))))
+    {
+        return PARSE_INVALID_VALUE;
+    }
+    while (*start != '\0')
+    {
+        if (*start == '.' && !ISDIGIT(*(start+1)))
+        {
+            return PARSE_INVALID_VALUE;
+        }
+        start++;
+    }
+    if (*(c->json) == '0')
+    {
+        if (c->json[1] != '.' && c->json[1] != 'e' && c->json[1] != 'E' && c->json[1] != '\0' && c->json[1] != ' ')
+        {
+            return PARSE_ROOT_NOT_SIGNULAR;
+        }
+    }
+    v->n = strtod(c->json, &end);
+    c->json = end;
+    if (!context_is_end(c))
+        return PARSE_ROOT_NOT_SIGNULAR;
+    if (fabs(v->n) > DBL_MAX)
+        return PARSE_NUMBER_TOO_BIG;
+    v->type = MI_NUMBER;
+    return PARSE_OK;
+}
+
 static int mi_parse_value(mi_context *c, mi_value *v)
 {
     v->type = MI_NULL;
@@ -92,7 +128,7 @@ static int mi_parse_value(mi_context *c, mi_value *v)
     case '\0':
         return PARSE_EXPECT_VALUE;
     default:
-        return PARSE_INVALID_VALUE;
+        return mi_parser_number(c, v);
     }
 }
 
@@ -103,7 +139,7 @@ mi_type mi_get_type(const mi_value *v)
 
 double mi_get_number(const mi_value *v)
 {
-    /*assert(v != NULL && v->type == MI_NUMBER)*/;
+    assert(v != NULL && v->type == MI_NUMBER);
     return v->n;
 }
 int mi_parser(mi_value *v, const char *json)

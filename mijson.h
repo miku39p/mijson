@@ -22,7 +22,8 @@ typedef enum
     PARSE_OK,
     PARSE_INVALID_VALUE,
     PARSE_EXPECT_VALUE,
-    PARSE_ROOT_NOT_SIGNULAR
+    PARSE_ROOT_NOT_SIGNULAR,
+    PARSE_NUMBER_TOO_BIG
 } parse_return_type;
 typedef struct
 {
