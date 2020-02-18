@@ -13,7 +13,15 @@ typedef enum
 typedef struct
 {
     /* data */
-    double n;
+    union {
+        struct
+        {
+            char *c;
+            size_t len;
+        } s;
+        double n;
+    } u;
+
     mi_type type;
 
 } mi_value;

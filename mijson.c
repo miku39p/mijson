@@ -104,15 +104,20 @@ static int mi_parser_number(mi_context *c, mi_value *v)
             return PARSE_ROOT_NOT_SIGNULAR;
         }
     }
-    v->n = strtod(c->json, &end);
+    v->u.n = strtod(c->json, &end);
     c->json = end;
     if (!context_is_end(c))
         return PARSE_ROOT_NOT_SIGNULAR;
-    if (fabs(v->n) > DBL_MAX)
+    if (fabs(v->u.n) > DBL_MAX)
         return PARSE_NUMBER_TOO_BIG;
     v->type = MI_NUMBER;
     return PARSE_OK;
 }
+
+ void mi_set_string(mi_value*v, const char *s, size_t len){
+     assert(v != NULL &&(s!=NULL || len == 0));
+     
+ }
 
 static int mi_parse_value(mi_context *c, mi_value *v)
 {
@@ -140,7 +145,7 @@ mi_type mi_get_type(const mi_value *v)
 double mi_get_number(const mi_value *v)
 {
     assert(v != NULL && v->type == MI_NUMBER);
-    return v->n;
+    return v->u.n;
 }
 int mi_parser(mi_value *v, const char *json)
 {
