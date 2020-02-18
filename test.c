@@ -23,22 +23,22 @@ static int test_pass = 0;
 #define EXPECT_EQ_INT(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%d")
 #define EXPECT_EQ_DOUBLE(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%.17g")
 
-#define TEST_ERROR(error, json)                       \
-    do                                                \
-    {                                                 \
-        parse_node *node_pt;                          \
-        node_pt = mi_parser(json);                    \
-        EXPECT_EQ_INT(error, node_pt->status);        \
-        EXPECT_EQ_INT(MI_NULL, mi_get_type(node_pt)); \
+#define TEST_ERROR(error, json)                    \
+    do                                             \
+    {                                              \
+        mi_value v;                                \
+        v.type = MI_FALSE;                         \
+        EXPECT_EQ_INT(error, mi_parser(&v, json)); \
+        EXPECT_EQ_INT(MI_NULL, mi_get_type(&v));   \
     } while (0)
 
-#define TEST_TYPE(expect_type, json)                      \
-    do                                                    \
-    {                                                     \
-        parse_node *node_pt;                              \
-        node_pt = mi_parser(json);                        \
-        EXPECT_EQ_INT(PARSE_OK, node_pt->status);         \
-        EXPECT_EQ_INT(expect_type, mi_get_type(node_pt)); \
+#define TEST_TYPE(expect_type, json)                  \
+    do                                                \
+    {                                                 \
+        mi_value v;                                   \
+        v.type = MI_NULL;                             \
+        EXPECT_EQ_INT(PARSE_OK, mi_parser(&v, json)); \
+        EXPECT_EQ_INT(expect_type, mi_get_type(&v));  \
     } while (0)
 
 #define TEST_NUMBER(expect_float, json)                    \
@@ -80,9 +80,6 @@ static void test_parse_error()
 
 static void test_number()
 {
-    TEST_NUMBER(1.0, "This");
-    TEST_NUMBER(-1.2, "-1.2");
-    TEST_NUMBER(1.2, "+1.2");
     TEST_NUMBER(0.0, "0");
     TEST_NUMBER(0.0, "-0");
     TEST_NUMBER(-0.1, "-0.1");
@@ -108,6 +105,7 @@ static void test_parse()
 {
     test_type();
     test_parse_error();
+    test_number();
 }
 
 int main()

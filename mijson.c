@@ -20,7 +20,6 @@ static void mi_parser_whitespace(mi_context *c)
     }
     c->json = p;
 }
-#define ISDIGIT(ch) ((ch) >= '0' && (ch) <= 9)
 
 static int context_is_end(mi_context *c)
 {
@@ -35,58 +34,52 @@ static int context_is_end(mi_context *c)
     }
 }
 
-static void mi_parser_null(mi_context *c, parse_node *v)
+static int mi_parser_null(mi_context *c, mi_value *v)
 {
     EXPECT(c, 'n');
     if (c->json[0] != 'u' || c->json[1] != 'l' || c->json[2] != 'l')
     {
-        v->status = PARSE_INVALID_VALUE;
-        return;
+        return PARSE_INVALID_VALUE;
     }
     c->json += 3;
     if (!context_is_end(c))
     {
-        v->status = PARSE_ROOT_NOT_SIGNULAR;
-        return;
+        return PARSE_ROOT_NOT_SIGNULAR;
     }
-    v->value.type = MI_NULL;
-    return;
+    v->type = MI_NULL;
+    return PARSE_OK;
 }
 
-static void mi_parser_true(mi_context *c, parse_node *v)
+static int mi_parser_true(mi_context *c, mi_value *v)
 {
     EXPECT(c, 't');
     if (c->json[0] != 'r' || c->json[1] != 'u' || c->json[2] != 'e')
     {
-        v->status = PARSE_INVALID_VALUE;
-        return;
+        return PARSE_INVALID_VALUE;
     }
     c->json += 3;
     if (!context_is_end(c))
     {
-        v->status = PARSE_ROOT_NOT_SIGNULAR;
-        return;
+        return PARSE_ROOT_NOT_SIGNULAR;
     }
-    v->value.type = MI_TRUE;
-    return;
+    v->type = MI_TRUE;
+    return PARSE_OK;
 }
 
-static void mi_parser_false(mi_context *c, parse_node *v)
+static int mi_parser_false(mi_context *c, mi_value *v)
 {
     EXPECT(c, 'f');
     if (c->json[0] != 'a' || c->json[1] != 'l' || c->json[2] != 's' || c->json[3] != 'e')
     {
-        v->status = PARSE_INVALID_VALUE;
-        return;
+        return PARSE_INVALID_VALUE;
     }
     c->json += 4;
     if (!context_is_end(c))
     {
-        v->status = PARSE_ROOT_NOT_SIGNULAR;
-        return;
+        return PARSE_ROOT_NOT_SIGNULAR;
     }
-    v->value.type = MI_FALSE;
-    return;
+    v->type = MI_FALSE;
+    return PARSE_OK;
 }
 static int mi_parser_number(mi_context *c, mi_value *v)
 {
@@ -123,40 +116,37 @@ static int mi_parser_number(mi_context *c, mi_value *v)
 
 static int mi_parse_value(mi_context *c, mi_value *v)
 {
+    v->type = MI_NULL;
     switch (*(c->json))
     {
     case 'n':
-        mi_parser_null(c, v);
+        return mi_parser_null(c, v);
     case 't':
-        mi_parser_true(c, v);
+        return mi_parser_true(c, v);
     case 'f':
-        mi_parser_false(c, v);
+        return mi_parser_false(c, v);
     case '\0':
-        return;
+        return PARSE_EXPECT_VALUE;
     default:
         return mi_parser_number(c, v);
     }
 }
 
-mi_type mi_get_type(const parse_node *node)
+mi_type mi_get_type(const mi_value *v)
 {
-    return node->value.type;
+    return v->type;
 }
 
-double mi_get_number(const parse_node *node)
+double mi_get_number(const mi_value *v)
 {
     assert(v != NULL && v->type == MI_NUMBER);
     return v->n;
 }
-
-parse_node *mi_parser(const char *json)
+int mi_parser(mi_value *v, const char *json)
 {
-    parse_node r;
     mi_context c;
-    r.value.type = MI_NULL;
-    r.status = PARSE_EXPECT_VALUE;
+    /*assert(&v != NULL)*/;
     c.json = json;
     mi_parser_whitespace(&c);
-    mi_parse_value(&c, &r);
-    return &r;
+    return mi_parse_value(&c, v);
 }

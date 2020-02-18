@@ -30,15 +30,7 @@ typedef struct
     /* data */
     const char *json;
 } mi_context;
-typedef struct 
-{
-    /* data */
-    int status;
-    mi_value value;
-}parse_node;
-
-parse_node* mi_parser(const char *json);
-mi_type mi_get_type(const parse_node *n);
-
-double mi_get_number(const parse_node *n);
+int mi_parser(mi_value *v, const char *json);
+mi_type mi_get_type(const mi_value *v);
+double mi_get_number(const mi_value *v);
 #endif
