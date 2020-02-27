@@ -37,8 +37,16 @@ typedef struct
 {
     /* data */
     const char *json;
+    char* stack;
+    size_t size;
+    size_t top;
 } mi_context;
 int mi_parser(mi_value *v, const char *json);
 mi_type mi_get_type(const mi_value *v);
 double mi_get_number(const mi_value *v);
+const char* mi_get_char(const mi_value *v);
+size_t mi_get_string_length(const mi_value *v);
+void mi_set_boolen(mi_value *v, int b);
+void mi_set_number(mi_value *v, double n);
+void mi_set_string(mi_value *v, const char *s, size_t len);
 #endif

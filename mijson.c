@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <float.h>
 #include <math.h>
+#include <string.h>
 #define EXPECT(c, ch)               \
     do                              \
     {                               \
@@ -10,6 +11,48 @@
         c->json++;                  \
     } while (0)
 #define ISDIGIT(ch) ((ch) >= '0' && (ch) <= '9')
+
+mi_type mi_get_type(const mi_value *v)
+{
+    return v->type;
+}
+
+double mi_get_number(const mi_value *v)
+{
+    assert(v != NULL && v->type == MI_NUMBER);
+    return v->u.n;
+}
+
+int mi_parser(mi_value *v, const char *json)
+{
+    mi_context c;
+    /*assert(&v != NULL)*/;
+    c.json = json;
+    c.stack = NULL;
+    c.size = c.top = 0;
+    mi_parser_whitespace(&c);
+    return mi_parse_value(&c, v);
+}
+
+void mi_set_string(mi_value *v, const char *s, size_t len)
+{
+    assert(v != NULL && (s != NULL || len == 0));
+    mi_free(v);
+    v->u.s.c = (char *)malloc(len + 1);
+    memcpy(v->u.s.c, s, len);
+    v->u.s.c[len] = '\0';
+    v->u.s.len = len;
+    v->type = MI_STRING;
+}
+
+void mi_free(mi_value *v)
+{
+    if ((v == NULL) || (v->type = MI_NULL))
+        return;
+    if (v->type == MI_STRING)
+        free(v->u.s.c);
+    v->type = MI_NULL;
+}
 
 static void mi_parser_whitespace(mi_context *c)
 {
@@ -91,7 +134,7 @@ static int mi_parser_number(mi_context *c, mi_value *v)
     }
     while (*start != '\0')
     {
-        if (*start == '.' && !ISDIGIT(*(start+1)))
+        if (*start == '.' && !ISDIGIT(*(start + 1)))
         {
             return PARSE_INVALID_VALUE;
         }
@@ -114,11 +157,6 @@ static int mi_parser_number(mi_context *c, mi_value *v)
     return PARSE_OK;
 }
 
- void mi_set_string(mi_value*v, const char *s, size_t len){
-     assert(v != NULL &&(s!=NULL || len == 0));
-     
- }
-
 static int mi_parse_value(mi_context *c, mi_value *v)
 {
     v->type = MI_NULL;
@@ -137,21 +175,24 @@ static int mi_parse_value(mi_context *c, mi_value *v)
     }
 }
 
-mi_type mi_get_type(const mi_value *v)
+static void *mi_context_push(mi_context *c, size_t size)
 {
-    return v->type;
+    void *ret;
+    if (c->top + size >= c->size)
+    {
+        if (c->size == 0)
+            c->size = 256;
+        while (c->top + c->size >= c->size)
+            c->size += c->size >> 1;
+        c->stack = (char *)realloc(c->stack, c->size);
+    }
+    ret = c->stack + c->top;
+    c->top = c->size;
+    return ret;
 }
 
-double mi_get_number(const mi_value *v)
+static void *mi_context_pop(mi_context *c, size_t size)
 {
-    assert(v != NULL && v->type == MI_NUMBER);
-    return v->u.n;
-}
-int mi_parser(mi_value *v, const char *json)
-{
-    mi_context c;
-    /*assert(&v != NULL)*/;
-    c.json = json;
-    mi_parser_whitespace(&c);
-    return mi_parse_value(&c, v);
+    assert(c->top >= size);
+    return c->stack + (c->top -= size);
 }
